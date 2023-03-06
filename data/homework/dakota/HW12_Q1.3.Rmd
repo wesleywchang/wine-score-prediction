@@ -1,0 +1,90 @@
+---
+title: "Evaluating the Classical Linear Model Assumptions"
+subtitle: "Q1.3 Linear Conditional Expectation"
+output: "pdf_document"
+---
+```{r install packages, message=FALSE, echo=FALSE, include=FALSE}
+if(!require(pacman)){install.packages("pacman")}
+library(pacman)
+p_load(tidyverse, patchwork, lmtest, sandwich, stargazer)
+
+
+```
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message=FALSE)
+library(tidyverse)
+library(patchwork)
+library(lmtest)
+library(sandwich)
+library(stargazer)
+theme_set(theme_minimal())
+
+```
+
+```{r load data, include=FALSE}
+
+videos <- read_delim("./videos.txt")
+
+videos <- videos %>% na.omit()
+
+```
+
+First the linear regression model was created.
+
+```{r model creation, echo=TRUE}
+
+model_12 <- lm(log(views) ~ rate + length, data= videos)
+
+```
+
+To assess whether there is linear conditional expectation we can examine two types of plots, model residuals vs predicted values and model residuals vs each feature's values.
+
+```{r}
+
+videos <- videos %>%
+  mutate(
+    model_12_preds = predict(model_12),
+    model_12_resids = resid(model_12)
+  )
+
+preds_resids <- videos %>%
+  ggplot(aes(model_12_preds,model_12_resids)) +
+  geom_point()+
+  stat_smooth()+
+  labs(
+    x= "Model Predictions",
+    y= "Model Residuals"
+  )
+
+rate_resids <- videos %>%
+  ggplot(aes(rate,model_12_resids)) +
+  geom_point()+
+  stat_smooth()+
+  labs(
+    x= "Rate",
+    y= "Model Residuals"
+  )
+
+length_resids <- videos %>%
+  ggplot(aes(length,model_12_resids)) +
+  geom_point()+
+  stat_smooth()+
+  labs(
+    x= "Length",
+    y= "Model Residuals"
+  )
+  
+```
+
+```{r, warning=FALSE}
+(preds_resids | rate_resids / length_resids)
+```
+
+Analysis of the left most plot reveals some non-linear relationships in the data. Beyond prediction values of ~ 9 the model's residuals become negative only, meaning the linear model predicts values higher than the actual data points. This indicates some non-linear behavior in the joint density function that is not captured in the linear model.
+
+Analysis of the upper right plot reveals residuals fluctuating about a mean of zero, resembling roughly linear conditional expectation with the Rate feature. However, analysis of the lower right plot again reveals the conditional expectation of the residuals drops below zero at Lengths greater than 3000 seconds.
+
+Therefore, we conclude that the assumption of Linear Conditional Expectation is not met because of the non-linear behavior seen in the residual plots above.

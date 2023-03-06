@@ -1,0 +1,154 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+---
+
+```{r}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message=FALSE)
+
+library(tidyverse)
+library(patchwork)
+
+knitr::opts_chunk$set(message=FALSE)
+theme_set(theme_minimal())
+```
+
+```{r}
+df = read.table(file = 'data/wine_explore.txt', sep = ',', header = TRUE)
+```
+
+
+```{r}
+plot_alcohol <- df %>%  
+  ggplot(aes(x = alcohol, y = quality)) + 
+  geom_point() + stat_smooth(se = TRUE)
+
+plot_alcohol
+```
+
+```{r}
+plot_potassium_sulphate <- df %>%  
+  ggplot(aes(x = potassium_sulphate, y = quality)) + 
+  geom_point() + stat_smooth(se = TRUE)
+
+plot_potassium_sulphate
+```
+
+```{r}
+plot_density <- df %>%  
+  ggplot(aes(x = density, y = quality)) + 
+  geom_point() + stat_smooth(se = TRUE)
+
+plot_density
+```
+
+```{r}
+plot_total_sulfur_dioxide <- df %>%  
+  ggplot(aes(x = total_sulfur_dioxide, y = quality)) + 
+  geom_point() + stat_smooth(se = TRUE)
+
+plot_total_sulfur_dioxide
+```
+
+```{r}
+plot_sodium_chloride <- df %>%  
+  ggplot(aes(x = sodium_chloride, y = quality)) + 
+  geom_point() + stat_smooth(se = TRUE)
+
+plot_sodium_chloride
+```
+
+```{r}
+plot_residual_sugar <- df %>%  
+  ggplot(aes(x = residual_sugar, y = quality)) + 
+  geom_point() + stat_smooth(se = TRUE)
+
+plot_residual_sugar
+```
+
+```{r}
+plot_citric_acid <- df %>%  
+  ggplot(aes(x = citric_acid, y = quality)) + 
+  geom_point() + stat_smooth(se = TRUE)
+
+plot_citric_acid
+```
+
+```{r}
+plot_acetic_acid <- df %>%  
+  ggplot(aes(x = acetic_acid, y = quality)) + 
+  geom_point() + stat_smooth(se = TRUE)
+
+plot_acetic_acid
+```
+
+```{r}
+plot_tartaric_acid <- df %>%  
+  ggplot(aes(x = tartaric_acid, y = quality)) + 
+  geom_point() + stat_smooth(se = TRUE)
+
+plot_tartaric_acid
+```
+
+```{r}
+plots <- list(plot_tartaric_acid, plot_acetic_acid, plot_citric_acid, plot_residual_sugar, plot_sodium_chloride, plot_total_sulfur_dioxide, plot_density, plot_potassium_sulphate, plot_alcohol)
+```
+
+```{r}
+plot <- df %>% 
+  ggplot() + 
+    aes(y=quality, x = acetic_acid) + 
+    geom_point() +
+    geom_smooth(se=FALSE) +  
+    labs(
+      x = expression(paste("Acetic Acid (g/dm"^"3", ")")), 
+      y = 'Wine Quality Score') +
+  theme(legend.title=element_blank(), legend.position = c(0.8, 0.84)) + stat_smooth(se = TRUE)
+plot
+```
+
+```{r}
+library(gridExtra)
+grid.arrange(grobs = plots, ncol = 3)
+````
+
+
+```{r}
+colnames(df)
+```
+
+
+```{r}
+model_0 <- lm(quality ~ potassium_sulphate, data = df)
+```
+
+```{r}
+model_1 <- lm(quality ~ potassium_sulphate + density + alcohol + sodium_chloride + citric_acid + tartaric_acid + acetic_acid, data = df)
+```
+
+```{r}
+model_2 <- lm(quality ~ potassium_sulphate + density + alcohol + sodium_chloride + citric_acid + tartaric_acid + acetic_acid + total_sulfur_dioxide + residual_sugar, data = df)
+```
+
+```{r}
+library(stargazer)
+
+
+stargazer(
+    model_0,
+    model_1,
+    model_2, 
+    type = 'text', out = 'wine_model_stargazer_table.tex',
+    digits = 3, 
+    dep.var.caption = 'Dependent Variable: Wine Quality',
+    dep.var.labels.include = FALSE,
+    covariate.labels = c(),
+    star.cutoffs = c(0.05, 0.01, 0.001),
+    align = FALSE)
+```
+

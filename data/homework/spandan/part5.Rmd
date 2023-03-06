@@ -1,0 +1,52 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+---
+
+```{r}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message=FALSE)
+
+library(tidyverse)
+library(patchwork)
+
+knitr::opts_chunk$set(message=FALSE)
+theme_set(theme_minimal())
+```
+
+```{r}
+df = read.table(file = 'data/videos.txt', sep = '\t', header = TRUE)
+# Remove NaN values
+df <- df %>% drop_na(rate)
+df <- df %>% drop_na(length)
+df <- df %>% drop_na(views)
+```
+
+Building the model: lm(log(views) ~ length + rate, data = df)
+
+```{r}
+model_1 <- lm(log(views) ~ length + rate, data = df)
+
+df <- df %>%  
+  mutate(model_1_residuals = resid(model_1),
+         model_1_predictions = predict(model_1))
+```
+
+Plotting a histogram to view the distribution of the residuals.
+```{r}
+# Draw the histogram
+hist(df$model_1_residuals)
+```
+From a glance it looks like the distribution is roughly normal and distributed quite evenly about 0.
+
+Plotting the qq-plot for the residuals.
+```{r}
+# Draw the Q-Q plot
+qqnorm(df$model_1_residuals)
+qqline(df$model_1_residuals, col = "blue", lwd = 2)
+```
+Similar to our histogram, from the above plot it looks like the values are normally distributed with only slight deviations near the ends. Normality of errors is met.

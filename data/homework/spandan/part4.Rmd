@@ -1,0 +1,53 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+```{r}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message=FALSE)
+
+library(tidyverse)
+library(patchwork)
+
+knitr::opts_chunk$set(message=FALSE)
+theme_set(theme_minimal())
+```
+
+```{r}
+df = read.table(file = 'data/videos.txt', sep = '\t', header = TRUE)
+# Remove NaN values
+df <- df %>% drop_na(rate)
+df <- df %>% drop_na(length)
+df <- df %>% drop_na(views)
+```
+
+Building the model: lm(log(views) ~ length + rate, data = df)
+```{r}
+model_1 <- lm(log(views) ~ length + rate, data = df)
+
+df <- df %>%  
+  mutate(model_1_residuals = resid(model_1),
+         model_1_predictions = predict(model_1))
+```
+
+Plotting the model predictions vs residuals to perform an ocular test to verify homoscedasticity.
+```{r}
+plot_ocular <- df %>% 
+  ggplot(aes(x = model_1_predictions, y = model_1_residuals)) + 
+  geom_point() + stat_smooth(se = TRUE)
+
+plot_ocular
+```
+
+From the above plot we can see that the model tends to under-predict for larger predictions, leading to negative residuals for upper range of the plot on the x.
+
+Conducting the Breusch-Pagan test to look for evidence of heteroscedasticity.
+```{r}
+lmtest::bptest(model_1)
+```
+We get a very small p-value, so we have strong evidence to reject the null hypothesis and conclude that there is some heteroscedasticity in the way residuals are distributed.
+
+

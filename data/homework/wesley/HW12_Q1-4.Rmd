@@ -1,0 +1,35 @@
+---
+title: "Question 1.4: Constant Error Variance"
+subtitle: "DATASCI 203 Homework: Classical Linear Model Practice"
+author: "Wesley Chang"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls())
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2)
+
+videos <- as.data.frame(read.delim("../videos.txt", header = TRUE) %>% na.omit())
+```
+
+
+# Evaluate the Homoskedastic errors assumption:
+
+```{r}
+model <- lm(log(views) ~ rate + length, data = videos)
+
+resid <- videos %>%
+  mutate(residuals = resid(model),
+         predictions = predict(model))
+
+plot <- resid %>%
+  ggplot(aes(x=predictions, y=residuals)) +
+  geom_point() + stat_smooth(se = TRUE)
+
+plot
+```
+
+Using the ocular test, we can see that there is some homoskedasticity due to the grouping of residual values on certain prediction values.

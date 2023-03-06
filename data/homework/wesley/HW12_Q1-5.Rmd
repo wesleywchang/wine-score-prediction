@@ -1,0 +1,48 @@
+---
+title: "Question 1.5: Normal Distribution Errors"
+subtitle: "DATASCI 203 Homework: Classical Linear Model Practice"
+author: "Wesley Chang"
+output: pdf_document
+---
+```{r setup, include=FALSE}
+rm(list = ls())
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2)
+library(patchwork)
+
+videos <- as.data.frame(read.delim("../videos.txt", header = TRUE) %>% na.omit())
+```
+
+
+# Evaluate the Normally Distributed errors assumption:
+
+```{r, include=FALSE}
+model <- lm(log(views) ~ rate + length, data = videos)
+
+resid <- videos %>%
+  mutate(residuals = resid(model),
+         predictions = predict(model))
+
+histogram <- resid %>%
+  ggplot(aes(x=residuals)) +
+  geom_histogram()
+  
+```
+
+```{r, message=FALSE}
+histogram
+```
+
+The shape of the histogram appears fairly normal.
+
+```{r, message=FALSE}
+qqnorm(resid$residuals)
+qqline(resid$residuals)
+```
+
+The Q-Q plot indicates that the quantiles in our data nearly perfectly match the quantiles of a Normal Distribution.
+
+
+From the Q-Q plot and the histogram of the residuals, I conclude that the assumption of Normally distributed errors is met.

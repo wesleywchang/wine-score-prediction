@@ -1,0 +1,71 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+```{r}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message=FALSE)
+
+library(tidyverse)
+library(patchwork)
+
+knitr::opts_chunk$set(message=FALSE)
+theme_set(theme_minimal())
+```
+
+```{r}
+df = read.table(file = 'data/videos.txt', sep = '\t', header = TRUE)
+# Remove NaN values
+df <- df %>% drop_na(rate)
+df <- df %>% drop_na(length)
+df <- df %>% drop_na(views)
+```
+
+```{r}
+model_1 <- lm(log(views) ~ length + rate, data = df)
+
+df <- df %>%  
+  mutate(model_1_residuals = resid(model_1),
+         model_1_predictions = predict(model_1))
+
+plot_1 <- df %>%  
+  ggplot(aes(x = length, y = model_1_residuals)) + 
+  geom_point() + geom_smooth(method = 'lm')
+
+plot_2 <- df %>%  
+  ggplot(aes(x = rate, y = model_1_residuals)) + 
+  geom_point() + stat_smooth(se = TRUE)
+
+plot_3 <- df %>%  
+  ggplot(aes(x = model_1_predictions, y = model_1_residuals)) + 
+  geom_point() + stat_smooth(se = TRUE)
+```
+
+Below is the plot for: Feature length vs Residuals
+```{r}
+plot_1
+```
+As we can see in the above plot, the model residuals are clearly distributed about zero where bulk of the points are lie. So, we believe that the linear conditional expectation condition is not violated based on what we see within this feature.
+
+
+Below is the plot for: Feature rate vs residuals
+```{r}
+plot_2
+```
+In the plot above, it doesn't appear that the model predictions are too high or low depending on the rate. We do see lots of points cluster on exact rating value, which is likely because the video had a single rating score. However, if we look at the region of the plot where majority of points lie, we see that the residuals remain distributed about zero. So, we believe that the linear conditional expectation condition is not violated based on what we see here.
+
+
+Below is the plot for: Model predictions vs residuals
+```{r}
+plot_3
+```
+
+Looking at the plot above, it does look like the model is slightly under predicting for range where the predictions are supposed to be very small or large, but it seems to be very close to zero (not over or under predicting) where bulk of points lie on the plot. It is hard to say whether this is because those points are outliers, or if there is actual non-linearity to be expected, when it comes to smaller/larger predictions, unless we have more data. So, we believe that the linear conditional expectation condition is not violated.
+
+So, we conclude that the Linear Conditional Expectation is met.
+
+
+

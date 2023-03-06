@@ -1,0 +1,336 @@
+---
+title: "Initial Exploration, Modeling, and Visualizations"
+output: "pdf_document"
+---
+
+
+```{r install packages, message=FALSE, echo=FALSE, include=FALSE}
+if(!require(pacman)){install.packages("pacman")}
+library(pacman)
+p_load(tidyverse, patchwork, lmtest, sandwich, stargazer, magrittr)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message=FALSE)
+
+library(tidyverse)
+library(patchwork)
+library(lmtest)
+library(sandwich)
+library(stargazer)
+library(magrittr)
+
+theme_set(theme_minimal())
+
+setwd('~/W203/Lab_2/andamooka')
+
+wine <- read.csv('./data/interim/wine_explore.csv', header=TRUE)
+
+```
+
+```{r}
+
+quality_vs_alcohol <- wine %>%
+  ggplot(aes(alcohol,quality))+
+  geom_point()+
+  geom_smooth(method='lm')
+
+quality_vs_alcohol
+
+```
+```{r}
+
+quality_vs_sulphate <- wine %>%
+  ggplot(aes(potassium_sulphate,quality))+
+  geom_point()+
+  geom_smooth(method='lm')
+
+quality_vs_sulphate
+
+```
+
+```{r}
+
+quality_vs_sugar <- wine %>%
+  ggplot(aes(residual_sugar,quality))+
+  geom_point()+
+  geom_smooth(method='lm')
+
+quality_vs_sugar
+
+```
+
+```{r}
+
+quality_vs_salt <- wine %>%
+  ggplot(aes(sodium_chloride,quality))+
+  geom_point()+
+  geom_smooth(method='lm')
+
+quality_vs_salt
+
+```
+
+```{r}
+
+quality_vs_acetic <- wine %>%
+  ggplot(aes(acetic_acid,quality))+
+  geom_point()+
+  geom_smooth(method='lm')
+
+quality_vs_acetic
+
+```
+
+```{r}
+
+quality_vs_citric <- wine %>%
+  ggplot(aes(citric_acid,quality))+
+  geom_point()+
+  geom_smooth(method='lm')
+
+quality_vs_citric
+
+```
+
+```{r}
+
+quality_vs_tartaric <- wine %>%
+  ggplot(aes(tartaric_acid,quality))+
+  geom_point()+
+  geom_smooth(method='lm')
+
+quality_vs_tartaric
+
+```
+
+```{r}
+
+quality_vs_free_sulfur <- wine %>%
+  ggplot(aes(free_sulfur_dioxide,quality))+
+  geom_point()+
+  geom_smooth(method='lm')
+
+quality_vs_free_sulfur
+
+```
+
+```{r}
+
+quality_vs_total_sulfur <- wine %>%
+  ggplot(aes(total_sulfur_dioxide,quality))+
+  geom_point()+
+  geom_smooth(method='lm')
+
+quality_vs_total_sulfur
+
+```
+
+```{r}
+
+quality_vs_pH <- wine %>%
+  ggplot(aes(pH,quality))+
+  geom_point()+
+  geom_smooth(method='lm')
+
+quality_vs_pH
+
+```
+
+```{r}
+
+quality_vs_density <- wine %>%
+  ggplot(aes(density,quality))+
+  geom_point()+
+  geom_smooth(method='lm')
+
+quality_vs_density
+
+```
+
+regression with potassium sulphate as primary X variable
+```{r fit models potassium_sulphate, include=FALSE}
+
+m_minimal <- lm(quality ~ potassium_sulphate, data=wine)
+
+se_minimal <- m_minimal %>% 
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+m_central <- lm(quality ~ potassium_sulphate + alcohol + sodium_chloride +
+                  acetic_acid + citric_acid + tartaric_acid + 
+                  residual_sugar, data=wine)
+
+se_central <- m_central %>%
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+m_verbose <- lm(quality ~ potassium_sulphate + alcohol + sodium_chloride +
+                  acetic_acid + citric_acid + tartaric_acid +
+                  residual_sugar + total_sulfur_dioxide + density, data=wine)
+
+se_verbose <- m_verbose %>%
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+m_final <- lm(quality ~ potassium_sulphate + alcohol + sodium_chloride +
+                  acetic_acid + citric_acid + tartaric_acid +
+                  residual_sugar + total_sulfur_dioxide, data=wine)
+
+se_final <- m_final %>%
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+```
+
+```{r display regression table potassium_sulphate, message=FALSE, echo=FALSE, results='asis'}
+stargazer(
+  m_minimal, m_central, m_verbose, m_final, 
+  type = 'latex', 
+  se = list(se_minimal,se_central,se_verbose, se_final),
+  omit = c(),
+  header=FALSE,
+  title = "Estimated Regressions",
+  dep.var.caption  = "Output Variable: Wine Quality Score",
+  dep.var.labels   = "",
+  star.cutoffs = c(0.05, 0.01, 0.001),
+  covariate.labels = c(),
+  omit.stat=c("adj.rsq","f"), 
+  digits=2,
+  notes.append = FALSE,
+  notes = "\\parbox[t]{7cm}{$HC_1$ robust standard errors in parentheses.}"
+)
+```
+
+regression with sodium_chloride as primary X variable
+```{r fit models sodium_chloride, include=FALSE}
+
+m_minimal <- lm(quality ~ sodium_chloride, data=wine)
+
+se_minimal <- m_minimal %>% 
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+m_central <- lm(quality ~ sodium_chloride + acetic_acid + potassium_sulphate +
+                  alcohol + citric_acid + tartaric_acid + 
+                  residual_sugar, data=wine)
+
+se_central <- m_central %>%
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+m_verbose <- lm(quality ~ sodium_chloride + acetic_acid + potassium_sulphate +
+                  alcohol + citric_acid + tartaric_acid +
+                  residual_sugar + total_sulfur_dioxide + density, data=wine)
+
+se_verbose <- m_verbose %>%
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+m_final <- lm(quality ~ sodium_chloride + acetic_acid + potassium_sulphate +
+                  alcohol + citric_acid + tartaric_acid +
+                  residual_sugar + total_sulfur_dioxide, data=wine)
+
+se_final <- m_final %>%
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+```
+
+```{r display regression table sodium_chloride, message=FALSE, echo=FALSE, results='asis'}
+stargazer(
+  m_minimal, m_central, m_verbose, m_final, 
+  type = 'latex', 
+  se = list(se_minimal,se_central,se_verbose, se_final),
+  omit = c(),
+  header=FALSE,
+  title = "Estimated Regressions",
+  dep.var.caption  = "Output Variable: Wine Quality Score",
+  dep.var.labels   = "",
+  star.cutoffs = c(0.05, 0.01, 0.001),
+  covariate.labels = c(),
+  omit.stat=c("adj.rsq","f"), 
+  digits=2,
+  notes.append = FALSE,
+  notes = "\\parbox[t]{7cm}{$HC_1$ robust standard errors in parentheses.}"
+)
+```
+
+regression with acetic_acid as primary X variable
+```{r fit models acetic_acid, include=FALSE}
+
+m_minimal <- lm(quality ~ acetic_acid, data=wine)
+
+se_minimal <- m_minimal %>% 
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+m_central <- lm(quality ~ acetic_acid + sodium_chloride + potassium_sulphate +
+                  alcohol + citric_acid + tartaric_acid + 
+                  residual_sugar, data=wine)
+
+se_central <- m_central %>%
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+m_verbose <- lm(quality ~ acetic_acid + sodium_chloride + potassium_sulphate +
+                  alcohol + citric_acid + tartaric_acid +
+                  residual_sugar + total_sulfur_dioxide + density, data=wine)
+
+se_verbose <- m_verbose %>%
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+m_final <- lm(quality ~ acetic_acid + sodium_chloride + potassium_sulphate +
+                  alcohol + citric_acid + tartaric_acid +
+                  residual_sugar + total_sulfur_dioxide, data=wine)
+
+se_final <- m_final %>%
+  vcovHC(type="HC1") %>%
+  diag() %>%
+  sqrt()
+
+```
+
+```{r display regression table acetic_acid, message=FALSE, echo=FALSE, results='asis'}
+stargazer(
+  m_minimal, m_central, m_verbose, m_final, 
+  type = 'latex', 
+  se = list(se_minimal,se_central,se_verbose, se_final),
+  omit = c(),
+  header=FALSE,
+  title = "Estimated Regressions",
+  dep.var.caption  = "Output Variable: Wine Quality Score",
+  dep.var.labels   = "",
+  star.cutoffs = c(0.05, 0.01, 0.001),
+  covariate.labels = c("Acetic acid $(g/dm^3)$", "Sodium chloride $(g/dm^3)$", 
+                       "Potassium sulphate $(g/dm^3)$", "Alcohol $(vol. \\%)$", 
+                       "Citric acid $(g/dm^3)$", "Tartaric acid $(g/dm^3)$", 
+                       "Residual sugar $(g/dm^3)$", "Total sulfur dioxide $(mg/dm^3)$", 
+                       "Density $(g/cm^3)$"),
+  omit.stat=c("adj.rsq","f"), 
+  digits=2,
+  notes.append = FALSE,
+  notes = "\\parbox[t]{7cm}{$HC_1$ robust standard errors in parentheses.}"
+)
+```
+
+
+
+Equation for linear regression:
+$$
+\widehat{quality} = \beta_0 + \beta_1\cdot (insert\ variable) + \mathbf{Z\gamma}
+$$
+

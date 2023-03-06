@@ -1,0 +1,69 @@
+---
+title: "Evaluating the Classical Linear Model Assumptions"
+subtitle: "Q1.5 Normally Distributed Errors"
+output: "pdf_document"
+---
+```{r install packages, message=FALSE, echo=FALSE, include=FALSE}
+if(!require(pacman)){install.packages("pacman")}
+library(pacman)
+p_load(tidyverse, patchwork, lmtest, sandwich, stargazer)
+
+
+```
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message=FALSE)
+library(tidyverse)
+library(patchwork)
+library(lmtest)
+library(sandwich)
+library(stargazer)
+theme_set(theme_minimal())
+
+```
+
+```{r load data, include=FALSE}
+
+videos <- read_delim("./videos.txt")
+
+videos <- videos %>% na.omit()
+
+```
+
+First the linear regression model was created.
+
+```{r model creation, echo=TRUE}
+
+model_12 <- lm(log(views) ~ rate + length, data= videos)
+
+```
+
+```{r}
+
+videos <- videos %>%
+  mutate(
+    model_12_preds = predict(model_12),
+    model_12_resids = resid(model_12)
+  )
+
+```
+
+To assess if the errors are normally distributed a histogram and qq plot were created. The histogram of the residuals reveals a relatively normal distribution. Examination of the qq plot further supports a normal distribution with only slight deviation from the theoretical normal line indicating some thin tails.
+
+```{r}
+
+errors_dist <- videos %>%
+  ggplot(aes(x= model_12_resids))+
+  geom_histogram()
+
+
+errors_qq <- videos %>%
+  ggplot(aes(sample= model_12_resids))+
+  stat_qq() + stat_qq_line()
+
+errors_dist / errors_qq
+```
+
+Therefore, we conclude that the assumption for Normally Distributed Errors is met.

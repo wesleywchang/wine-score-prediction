@@ -1,0 +1,141 @@
+---
+title: "Unit 12 CLM Practice"
+output: "pdf_document"
+---
+```{r install packages, message=FALSE, echo=FALSE}
+if(!require(pacman)){install.packages("pacman")}
+library(pacman)
+p_load(tidyverse, patchwork, lmtest, sandwich, stargazer)
+
+
+```
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message=FALSE)
+library(tidyverse)
+library(patchwork)
+library(lmtest)
+library(sandwich)
+library(stargazer)
+theme_set(theme_minimal())
+
+```
+
+```{r load data, include=FALSE}
+
+videos <- read_delim("./videos.txt")
+
+videos <- videos %>% na.omit()
+
+```
+
+## Model Creation
+
+```{r model creation, include=FALSE}
+
+model_12 <- lm(log(views) ~ rate + length, data= videos)
+
+```
+
+## Assumptions 
+
+The *five* CLM Assumptions are: 
+
+1. IID (i.e. Random) Sampling 
+2. Linear Conditional Expectation
+3. No Perfect Collinearity 
+4. Homoskedastic Conditional Variance (Constant Conditional Variance)
+5. Normally Distributed Errors
+
+## IID Data
+
+To assess if data is IID we need to analyze the design and sampling process. Details about how the data was collected can be found at https://netsg.cs.sfu.ca/youtubedata/. 
+
+The data was collected using a breadth-first crawler algorithm. The initial set of 0-depth videos were selected as all unique videos from the list of "Recently Featured", "Most Viewed", "Top Rated" and "Most Discussed", for "Today", "This Week", "This Month" and "All Time" on February 22nd, 2007. From this initial list / depth the algorithm will select each unique video, scan the first 20 entries on the related videos' list, and add any new videos to queue. The crawl then proceeds to the next depth and repeats.
+
+From this description alone we may expect videos to not be independent of each other.
+
+* New videos are collected by scanning the related videos' list, videos from this list are most definitely not randomly selected and have some relation to the original video such as common authors or descriptive keywords (clustering). 
+* Some clustering based on youtube metrics ("Recently Featured", "Most Viewed", "Top Rated" and "Most Discussed") is also present which restricts the reference population to only videos found within these groups and those related to them. Thus, some of the video population will not have the same probability of appearing in the crawls.
+* Samples were taking through time. Crawls were performed at various points throughout time with different reference populations of videos.
+* Successful videos may be imitated by other content creators (strategic effect).
+
+For these reasons we conclude that the assumption of IID data is questionable.
+
+## Linear Conditional Expectation
+
+```{r}
+
+videos <- videos %>%
+  mutate(
+    model_12_preds = predict(model_12),
+    model_12_resids = resid(model_12)
+  )
+
+preds_resids <- videos %>%
+  ggplot(aes(model_12_preds,model_12_resids)) +
+  geom_point()+
+  stat_smooth()
+
+rate_resids <- videos %>%
+  ggplot(aes(rate,model_12_resids)) +
+  geom_point()+
+  stat_smooth()
+
+length_resids <- videos %>%
+  ggplot(aes(length,model_12_resids)) +
+  geom_point()+
+  stat_smooth()
+  
+```
+
+```{r, warning=FALSE}
+(preds_resids | rate_resids / length_resids)
+```
+## No Perfect Collinearity
+R Does not drop any features and regression runs. Therefore, there is no perfect collinearity.
+Standard Errors are very small so likely no near perfect collinearity either.
+
+```{r}
+
+model_12$coefficients
+summary(model_12)
+
+```
+
+## Homoskedastic Errors
+To assess whether the distribution of the errors is homoskedastic, we can perform an ocular test on the residuals versus predictions. Homoskedastic errors would reveal a band of even thickness from left to right. Examining the plot reveals a slightly uneven band in the lower half of the predicted values though it is not severe. However in the upper half of the predicted values there is a sharp decrease in the variance of residuals.
+
+```{r}
+
+preds_resids
+
+
+```
+Another means to assess homoskedasticity is to examine the scale-location plot. Homoskedasticity would show as a flat smoothing curve. As seen below the curve is relatively flat in the lower half of the predicted values but increases slightly in the upper half.
+
+```{r}
+
+scale_location <- plot(model_12, which=3)
+
+scale_location
+
+```
+## Normally Distributed Errors
+To assess if the errors are normally distributed a histogram and qq plot were created. The histogram of the residuals reveals a relatively normal distribution. Examination of the qq plot further supports a normal distribution with only slight deviation from the theoretical normal line indicating some thin tails.
+
+```{r}
+
+errors_dist <- videos %>%
+  ggplot(aes(x= model_12_resids))+
+  geom_histogram()
+
+
+errors_qq <- videos %>%
+  ggplot(aes(sample= model_12_resids))+
+  stat_qq() + stat_qq_line()
+
+errors_dist / errors_qq
+```

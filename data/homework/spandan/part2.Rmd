@@ -1,0 +1,47 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+
+```{r}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message=FALSE)
+
+library(tidyverse)
+library(patchwork)
+
+knitr::opts_chunk$set(message=FALSE)
+theme_set(theme_minimal())
+```
+
+```{r}
+df = read.table(file = 'data/videos.txt', sep = '\t', header = TRUE)
+# Remove NaN values
+df <- df %>% drop_na(rate)
+df <- df %>% drop_na(length)
+df <- df %>% drop_na(views)
+```
+
+Building the model: lm(log(views) ~ length + rate, data = df)
+```{r}
+model_1 <- lm(log(views) ~ length + rate, data = df)
+```
+
+Correlation of length and rate columns:
+```{r}
+cor(df$length, df$rate)
+```
+
+Getting model summary:
+```{r}
+summary(model_1)
+```
+
+Neither feature was dropped, so there must be no perfect collinearity. Also, the p-value assigned to both features is very low, so they're both important to our regression. Furthermore, the correlation between length and rate is only 0.16, so one is not a linear combination of the other.
+
+
+

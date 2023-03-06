@@ -1,0 +1,68 @@
+---
+title: "Evaluating the Classical Linear Model Assumptions"
+subtitle: "Q1.2 No Perfect Collinearity"
+output: "pdf_document"
+---
+```{r install packages, message=FALSE, echo=FALSE, include=FALSE}
+if(!require(pacman)){install.packages("pacman")}
+library(pacman)
+p_load(tidyverse, patchwork, lmtest, sandwich, stargazer)
+
+
+```
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message=FALSE)
+library(tidyverse)
+library(patchwork)
+library(lmtest)
+library(sandwich)
+library(stargazer)
+theme_set(theme_minimal())
+
+```
+
+```{r load data, include=FALSE}
+
+videos <- read_delim("./videos.txt")
+
+videos <- videos %>% na.omit()
+
+```
+
+First the linear regression model was created.
+
+```{r, echo=TRUE}
+
+model_12 <- lm(log(views) ~ rate + length, data= videos)
+
+```
+
+Identifying **perfect** collinearity is relatively straightforward. If perfect collinearity is present either the regression will not run or a feature will be dropped within the model. In the model created above R does not drop any features and the regression runs successfully. We can validate this by looking at the model coefficients.
+
+```{r, echo=TRUE}
+
+model_12$coefficients
+
+```
+
+Identifying **nearly perfect** collinearity is harder to spot. If nearly perfect collinearity is present the model will have large standard errors on colinear features. In the model created above the standard errors are very small.
+
+```{r, echo=TRUE}
+
+summary(model_12)$coefficients[,2]
+
+
+```
+Additionally, we can determine the correlation between the rate and length variables is relatively low, 0.157, where perfectly collinear correlation would be +/- 1.0.
+
+```{r, echo=TRUE}
+
+cor(videos$rate, videos$length)
+
+
+```
+
+Therefore, we conclude that the assumption of No Perfect Collinearity has been met because the regression model ran successfully and did not drop any features. Additionally, the low standard errors and correlation of the rate and length features indicates nearly perfect collinearity is not present.

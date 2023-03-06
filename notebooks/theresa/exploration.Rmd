@@ -1,0 +1,161 @@
+---
+title: "W205"
+author: "Theresa Azinge"
+date: "2022-12-01"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Exploration
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(wooldridge)
+library(car)
+library(lmtest)
+library(sandwich)
+library(stargazer)
+```
+
+```{r warning=FALSE}
+setwd("~/Desktop/git_test/andamooka")
+wine <- read.csv('./data/processed/wine_explore.csv', header=TRUE)
+```
+
+
+
+```{r warning=FALSE}
+# To assemble multiple plots
+library(gridExtra)
+
+p1 <- ggplot(data = wine, aes(x = potassium_sulphate)) +
+  geom_histogram(bins = 20) +
+  labs(x = "Potassium Sulphate",y = "Count")
+
+
+p2 <- ggplot(data = wine, aes(x = tartaric_acid)) +
+  geom_histogram(bins = 20) +
+  labs(x = "Tartaric Acid",y = "Count")
+
+p3 <- ggplot(data = wine, aes(x = acetic_acid)) +
+  geom_histogram(bins = 20) +
+  labs(x = "Acetic Acid",y = "Count")
+
+p4 <- ggplot(data = wine, aes(x = citric_acid)) +
+  geom_histogram(bins = 20) +
+  labs(x = "Citric Acid",y = "Count")
+
+p5 <- ggplot(data = wine, aes(x = residual_sugar)) +
+  geom_histogram(bins = 20) +
+  labs(x = "Residual Sugar",y = "Count")
+
+p6 <- ggplot(data = wine, aes(x = sodium_chloride)) +
+  geom_histogram(bins = 20) +
+  labs(x = "Sodium Chloride",y = "Count")
+
+p7 <- ggplot(data = wine, aes(x = total_sulfur_dioxide)) +
+  geom_histogram(bins = 20) +
+  labs(x = "Total Sulfur Dioxide",y = "Count")
+
+p8 <- ggplot(data = wine, aes(x = density)) +
+  geom_histogram(bins = 20) +
+  labs(x = "Density",y = "Count")
+
+p9 <- ggplot(data = wine, aes(x = alcohol)) +
+  geom_histogram(bins = 20) +
+  labs(x = "Alcohol",y = "Count")
+
+p10 <- ggplot(data = wine, aes(x = quality)) +
+  geom_histogram(bins = 20) +
+  labs(x = "Quality",y = "Count")
+
+grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10, nrow = 5, ncol = 2)
+```
+```{r warning=FALSE}
+# To assemble multiple plots
+library(gridExtra)
+
+p1 <- ggplot(data = wine, aes(x = tartaric_acid, y = quality)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(x = "Tartaric Acid", y = "Quality")
+
+
+p2 <- ggplot(data = wine, aes(x = acetic_acid, y = quality)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(x = "Acetic Acid", y = "Quality")
+
+p3 <- ggplot(data = wine, aes(x = citric_acid, y = quality)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(x = "Citric Acid", y = "Quality")
+
+
+p4 <- ggplot(data = wine, aes(x = residual_sugar, y = quality)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(x = "Residual Sugar", y = "Quality")
+
+
+p5 <- ggplot(data = wine, aes(x = sodium_chloride, y = quality)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(x = "Sodium Chloride", y = "Quality")
+
+
+p6 <- ggplot(data = wine, aes(x = total_sulfur_dioxide, y = quality)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(x = "Total Sulfur Dioxide", y = "Quality")
+
+p7 <- ggplot(data = wine, aes(x = density, y = quality)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(x = "Density", y = "Quality")
+
+p8 <- ggplot(data = wine, aes(x = potassium_sulphate, y = quality)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(x = "Potassium Sulphate", y = "Quality")
+
+p9 <- ggplot(data = wine, aes(x = alcohol, y = quality)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(x = "Alcohol", y = "Quality")
+
+grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9, nrow = 5, ncol = 2)
+```
+```{r}
+names(wine)
+```
+
+
+```{r}
+model1 <- lm(quality ~ tartaric_acid + acetic_acid + citric_acid + residual_sugar + sodium_chloride + total_sulfur_dioxide + density + potassium_sulphate + alcohol, data = wine)
+coeftest(model1, vcov = vcovHC)
+```
+The coefficients for acetic acid, residual sugar, potassium sulphate, and alcohol are statistically significant. So, we can conclude that there is a statistically meaningful relationship between these four variables and the quality of the white wine. This result might change if we include polynomial terms which control for possible nonlinearity between the variables. The next model will check for polynomial terms.
+
+```{r}
+model2 <- lm(quality ~ tartaric_acid + I(tartaric_acid^2) + acetic_acid + I(acetic_acid^2) + citric_acid + I(citric_acid^2) + residual_sugar + I(residual_sugar^2) + sodium_chloride + I(sodium_chloride^2) + total_sulfur_dioxide + I(total_sulfur_dioxide^2) + density + I(density^2) + potassium_sulphate + I(potassium_sulphate^2) + alcohol + I(alcohol^2), data = wine)
+coeftest(model2, vcov = vcovHC)
+```
+
+Coefficients of total_sulfur_dioxide and  total_sulfur_dioxide^2 are statistically significant and positive and negative respectively, which means an additional total_sulfur_dioxide is associated with an increase in quality but at a diminishing rate. Also, the non-significant coefficients have been removed.
+```{r}
+model3 <- lm(quality ~ acetic_acid + residual_sugar + total_sulfur_dioxide + I(total_sulfur_dioxide^2) + potassium_sulphate + alcohol, data = wine)
+coeftest(model3, vcov = vcovHC)
+```
+
+```{r warning=FALSE}
+se.model1 = coeftest(model1, vcov = vcovHC)[ , "Std. Error"]
+se.model2 = coeftest(model2, vcov = vcovHC)[ , "Std. Error"]
+se.model3 = coeftest(model3, vcov = vcovHC)[ , "Std. Error"]
+
+stargazer(model1, model2, model3, type = "text", #omit.stat = "f",
+          se = list(se.model1, se.model2,se.model3),
+          star.cutoffs = c(0.05, 0.01, 0.001), title = "Table 1: The relationship between quality of white wine and physical/chemical characteristics")
+```
+

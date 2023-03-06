@@ -1,0 +1,47 @@
+---
+title: "Question 1.3: Linear Conditional Expectation"
+subtitle: "DATASCI 203 Homework: Classical Linear Model Practice"
+author: "Wesley Chang"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls())
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2)
+library(patchwork)
+videos <- as.data.frame(read.delim("../videos.txt", header = TRUE) %>% na.omit())
+```
+
+
+# Evaluate the Linear Conditional Expectation errors assumption:
+
+
+```{r, include=FALSE}
+model <- lm(log(views) ~ rate + length, data = videos)
+
+resid <- videos %>%
+  mutate(residuals = resid(model),
+         predictions = predict(model))
+
+plot1 <- resid %>%
+  ggplot(aes(x=rate, y=residuals)) +
+  geom_point() + stat_smooth()
+
+plot2 <- resid %>%
+  ggplot(aes(x=length, y=residuals)) +
+  geom_point() + stat_smooth()
+
+plot3 <- resid %>%
+  ggplot(aes(x=predictions, y=residuals)) +
+  geom_point() + stat_smooth(se = TRUE)
+```
+
+```{r, message=FALSE}
+plot1 + plot2 + plot3
+```
+
+
+The plot of the rate and length with residuals suggests that the conditional expectation is fairly linear. However, the plot of predictions and residuals suggests that there is a non linear conditional expectation.

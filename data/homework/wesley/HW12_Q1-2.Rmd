@@ -1,0 +1,32 @@
+---
+title: "Question 1.2: No Perfect  Collinearity"
+subtitle: "DATASCI 203 Homework: Classical Linear Model Practice"
+author: "Wesley Chang"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls())
+knitr::opts_chunk$set(echo = TRUE)
+
+videos <- as.data.frame(read.delim("../videos.txt", header = TRUE))
+```
+
+
+# Evalute the No perfect collinearity assumption:
+
+We want to evaluate the condition of no perfect collinearity for the model:
+$$
+\ln(\textrm{views}) = \beta_0+\beta_1\textrm{rate}+\beta_3\textrm{length}
+$$
+
+This is fairly easy to evaluate computationally as R will automatically drop the variables that are perfectly correlated with another variable in the model.
+
+
+```{r}
+summary(lm(log(views) ~ rate + length, data = videos))
+``` 
+
+
+We can see that the original full model is retained with no variables dropped, therefore we can safely assume there is no perfect collinearity. Additionally, we can see that the standard errors associated with each variable are fairly low, so we can further assume there is likely also no near perfect collinearity.
+

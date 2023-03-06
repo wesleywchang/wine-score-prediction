@@ -1,0 +1,75 @@
+---
+title: "Evaluating the Classical Linear Model Assumptions"
+subtitle: "Q1.4 Constant Error Variance"
+output: "pdf_document"
+---
+```{r install packages, message=FALSE, echo=FALSE, include=FALSE}
+if(!require(pacman)){install.packages("pacman")}
+library(pacman)
+p_load(tidyverse, patchwork, lmtest, sandwich, stargazer)
+
+
+```
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message=FALSE)
+library(tidyverse)
+library(patchwork)
+library(lmtest)
+library(sandwich)
+library(stargazer)
+theme_set(theme_minimal())
+
+```
+
+```{r load data, include=FALSE}
+
+videos <- read_delim("./videos.txt")
+
+videos <- videos %>% na.omit()
+
+```
+
+First the linear regression model was created.
+
+```{r model creation, echo=TRUE}
+
+model_12 <- lm(log(views) ~ rate + length, data= videos)
+
+```
+
+```{r}
+
+videos <- videos %>%
+  mutate(
+    model_12_preds = predict(model_12),
+    model_12_resids = resid(model_12)
+  )
+
+preds_resids <- videos %>%
+  ggplot(aes(model_12_preds,model_12_resids)) +
+  geom_point()+
+  stat_smooth()+
+  labs(
+    x= "Model Predictions",
+    y= "Model Residuals"
+  )
+
+```
+
+To assess whether the distribution of the errors is homoskedastic, we can perform an ocular test on the model residuals versus predicted values plot. Homoskedastic errors would reveal a band of even thickness from left to right. Examining the plot reveals a slightly uneven band in the lower half of the predicted values though it is not severe. However in the upper half of the predicted values there is a sharp decrease in the variance of residuals.
+
+```{r analysis of errors, fig.height=4.0, fig.align='center'}
+
+preds_resids
+
+```
+Additionally, we can conduct a Breusch-Pagan test. A p-value less than 0.05 would indicate heteroskedasticity. Analysis of the test below reveals a statistically significant result supporting heteroskedasticity.
+```{r}
+lmtest::bptest(model_12)
+```
+
+ Therefore, we conclude the assumption for Constant Error Variance / Homoskedasticity of Errors is not met.
+
